@@ -10,31 +10,31 @@ namespace hcGate
     {
         #region " Fields & Properties "
 
-        SerialPort Port = new SerialPort();
-        byte[] inpBuffer = new byte[Defaults.IoBufferSize];
-        int inpBufferSize = 0;
-        LinkedList<hcData> outQueue = new LinkedList<hcData>();
+        private SerialPort _port = new SerialPort();
+        private byte[] _buffer = new byte[Defaults.IoBufferSize];
+        private int _bufferSize = 0;
+        private LinkedList<hcData> _outQueue = new LinkedList<hcData>();
 
         public bool IsOpen
         {
-            get { return Port.IsOpen; }
+            get { return _port.IsOpen; }
         }
 
         public string Name
         {
-            get { return Port.PortName; }
-            set { if (!Port.IsOpen) Port.PortName = value; }
+            get { return _port.PortName; }
+            set { if (!_port.IsOpen) _port.PortName = value; }
         }
 
         public int BaudRate
         {
-            get { return Port.BaudRate; }
-            set { if (!Port.IsOpen) Port.BaudRate = value; }
+            get { return _port.BaudRate; }
+            set { if (!_port.IsOpen) _port.BaudRate = value; }
         }
 
         public string Settings
         {
-            get { return Port.BaudRate + " " + Port.DataBits + "," + Port.Parity + "," + Port.StopBits; }
+            get { return _port.BaudRate + " " + _port.DataBits + "," + _port.Parity + "," + _port.StopBits; }
         }
 
         #endregion
@@ -43,74 +43,66 @@ namespace hcGate
 
         public ComPort()
         {
-            Port.DataBits = 8;
-            Port.Parity = Parity.None;
-            Port.StopBits = StopBits.One;
-            Port.Handshake = Handshake.None;
-            Port.DiscardNull = true;
-            Port.NewLine = Defaults.ComPortDelimiter;
+            _port.DataBits = 8;
+            _port.Parity = Parity.None;
+            _port.StopBits = StopBits.One;
+            _port.Handshake = Handshake.None;
+            _port.DiscardNull = true;
+            _port.NewLine = Defaults.ComPortDelimiter;
 
-            Port.DataReceived += new SerialDataReceivedEventHandler(receiveCallback);
+            _port.DataReceived += new SerialDataReceivedEventHandler(receiveCallback);
 
-            WatchdogTimer = new Timer(Defaults.WatchdogTimerInterval);
-            WatchdogTimer.AutoReset = false;
-            WatchdogTimer.Elapsed += new ElapsedEventHandler(WatchdogTimer_Elapsed);
+            _watchdogTimer = new Timer(Defaults.WatchdogTimerInterval);
+            _watchdogTimer.AutoReset = false;
+            _watchdogTimer.Elapsed += new ElapsedEventHandler(WatchdogTimer_Elapsed);
         }
 
         #endregion
 
         #region " Events "
 
-
-
-        public event EventHandler<hcData> DataReceived;
-        void OnDataReceived(int _id, int _data)
+        public event EventHandler<hcData> DataReceivedEventHandler;
+        void OnDataReceived(int id, int data)
         {
-            if (DataReceived != null)
-                DataReceived(this, new hcData(_id, _data));
+            if (DataReceivedEventHandler != null)
+                DataReceivedEventHandler(this, new hcData(id, data));
         }
 
-
-
-        public event EventHandler<hcCommand> CommandReceived;
-        void OnCommandReceived(byte _id, string _cmd)
+        public event EventHandler<hcCommand> CommandReceivedEventHandler;
+        void OnCommandReceived(byte id, string cmd)
         {
-            if (CommandReceived != null)
-                CommandReceived(this, new hcCommand(_id, _cmd));
+            if (CommandReceivedEventHandler != null)
+                CommandReceivedEventHandler(this, new hcCommand(id, cmd));
         }
 
-
-
-        public event EventHandler ResetReceived;
+        public event EventHandler ResetReceivedEventHandler;
         void OnResetReceived()
         {
-            if (ResetReceived != null)
-                ResetReceived(this, EventArgs.Empty);
+            if (ResetReceivedEventHandler != null)
+                ResetReceivedEventHandler(this, EventArgs.Empty);
         }
-
-
 
         #endregion
 
         #region " Keep Alive "
 
-        bool valid = false;
-        public bool Valid { get { return valid; } }
+        private bool _valid = false;
+        public bool Valid { get { return _valid; } }
 
-        Timer WatchdogTimer;
+        Timer _watchdogTimer;
 
         void WatchdogTimer_Elapsed(object sender, ElapsedEventArgs e)
         {
-            WatchdogTimer.Stop();
-            valid = false;
+            _watchdogTimer.Stop();
+            _valid = false;
             OnResetReceived();
         }
 
         void WatchdogTimer_Reset()
         {
-            WatchdogTimer.Stop();
+            _watchdogTimer.Stop();
             if (IsOpen)
-                WatchdogTimer.Start();
+                _watchdogTimer.Start();
         }
 
         #endregion
@@ -119,45 +111,45 @@ namespace hcGate
 
         public void Open()
         {
-            valid = false;
+            _valid = false;
 
-            Port.Open();
-            Port.DiscardInBuffer();
-            Port.DiscardOutBuffer();
-            inpBufferSize = 0;
+            _port.Open();
+            _port.DiscardInBuffer();
+            _port.DiscardOutBuffer();
+            _bufferSize = 0;
 
             WatchdogTimer_Reset();
         }
 
         public void Close()
         {
-            valid = false;
-            WatchdogTimer.Stop();
-            inpBufferSize = 0;
+            _valid = false;
+            _watchdogTimer.Stop();
+            _bufferSize = 0;
 
-            Port.Close();
+            _port.Close();
 
-            lock (outQueue)
+            lock (_outQueue)
             {
-                outQueue.Clear();
+                _outQueue.Clear();
             }
         }
 
-        public void SendData(int _id, int _val)
+        public void SendData(int id, int val)
         {
-            if (!valid) return;
+            if (!_valid) return;
 
-            lock (outQueue)
+            lock (_outQueue)
             {
-                hcData newEvent = new hcData(_id, _val);
-                LinkedListNode<hcData> currEvent = outQueue.Find(newEvent);
+                hcData newEvent = new hcData(id, val);
+                LinkedListNode<hcData> currEvent = _outQueue.Find(newEvent);
                 if (currEvent != null)
                 {
                     currEvent.Value.Data = newEvent.Data;
                 }
                 else
                 {
-                    outQueue.AddLast(newEvent);
+                    _outQueue.AddLast(newEvent);
                 }
             }
         }
@@ -166,30 +158,27 @@ namespace hcGate
 
         #region " Private Methods "
 
-
-
         void receiveCallback(object sender, SerialDataReceivedEventArgs e)
         {
-            int bytesRead = Port.BytesToRead;
+            int bytesRead = _port.BytesToRead;
             if (0 != bytesRead)
             {
                 byte b;
                 for (int i = 0; i < bytesRead; i++)
                 {
-                    b = (byte)Port.ReadByte();
+                    b = (byte)_port.ReadByte();
                     switch (b)
                     {
-                        case 0x0A: break;
                         case 0x0D:
                             parseReceived();
-                            inpBufferSize = 0;
+                            _bufferSize = 0;
                             break;
                         default:
                             if (b > 0x20 && b < 0x7F)
                             {
-                                inpBuffer[inpBufferSize++] = b;
-                                if (inpBufferSize > inpBuffer.Length)
-                                    inpBufferSize = 0;
+                                _buffer[_bufferSize++] = b;
+                                if (_bufferSize > _buffer.Length)
+                                    _bufferSize = 0;
                             }
                             break;
                     }
@@ -197,28 +186,26 @@ namespace hcGate
             }
         }
 
-
-
         void parseReceived()
         {
-            if (inpBufferSize < 4) return;
+            if (_bufferSize < 4) return;
 
-            if (CheckSum.Sum8(inpBuffer, inpBufferSize - 2) !=
-                HexParser.GetByte(inpBuffer, inpBufferSize - 2))
+            if (CheckSum.Sum8(_buffer, _bufferSize - 2) !=
+                HexParser.GetByte(_buffer, _bufferSize - 2))
                 return;
-            inpBufferSize -= 2;
+            _bufferSize -= 2;
 
             WatchdogTimer_Reset();
 
-            switch ((char)inpBuffer[0])
+            switch ((char)_buffer[0])
             {
                 case '$':
-                    if (inpBufferSize == (2))
+                    if (_bufferSize == (2))
                     {
-                        switch ((char)inpBuffer[1])
+                        switch ((char)_buffer[1])
                         {
                             case 'T':
-                                if (!valid)
+                                if (!_valid)
                                 {
                                     Send("!R");
                                     break;
@@ -235,32 +222,32 @@ namespace hcGate
                                 break;
 
                             case 'C':
-                                lock (outQueue)
+                                lock (_outQueue)
                                 {
-                                    if (outQueue.Count > 0)
-                                        outQueue.RemoveFirst();
+                                    if (_outQueue.Count > 0)
+                                        _outQueue.RemoveFirst();
                                 }
                                 break;
 
                             case 'R':
-                                lock (outQueue)
+                                lock (_outQueue)
                                 {
-                                    outQueue.Clear();
+                                    _outQueue.Clear();
                                 }
                                 OnResetReceived();
                                 Send("!");
-                                valid = true;
+                                _valid = true;
                                 break;
                         }
                     }
-                    else if (inpBufferSize > (2 + 2))
+                    else if (_bufferSize > (2 + 2))
                     {
-                        if ((char)inpBuffer[1] == 'K')
+                        if ((char)_buffer[1] == 'K')
                         {
-                            byte _id = HexParser.GetByte(inpBuffer, 2);
+                            byte _id = HexParser.GetByte(_buffer, 2);
                             if (0 != _id)
                             {
-                                String _str = Encoding.ASCII.GetString(inpBuffer, 4, inpBufferSize - 4);
+                                String _str = Encoding.ASCII.GetString(_buffer, 4, _bufferSize - 4);
                                 OnCommandReceived(_id, _str);
                             }
                         }
@@ -268,10 +255,10 @@ namespace hcGate
                     break;
 
                 case '#':
-                    if (inpBufferSize == (1 + 4 + 4))
+                    if (_bufferSize == (1 + 4 + 4))
                     {
-                        int _id = HexParser.GetInt16(inpBuffer, 1);
-                        int _val = HexParser.GetInt16(inpBuffer, 5);
+                        int _id = HexParser.GetInt16(_buffer, 1);
+                        int _val = HexParser.GetInt16(_buffer, 5);
                         OnDataReceived(_id, _val);
                         Send(">");
                     }
@@ -279,29 +266,23 @@ namespace hcGate
             }
         }
 
-
-
         hcData outQueue_Peek()
         {
             hcData _hd = null;
-            lock (outQueue)
+            lock (_outQueue)
             {
-                LinkedListNode<hcData> firstEvt = outQueue.First;
+                LinkedListNode<hcData> firstEvt = _outQueue.First;
                 if (firstEvt != null)
                     _hd = firstEvt.Value;
             }
             return _hd;
         }
 
-
-
         void Send(string _str)
         {
             byte sum = CheckSum.Sum8(_str);
-            Port.Write(_str + sum.ToString("X2") + Defaults.ComPortDelimiter);
+            _port.Write(_str + sum.ToString("X2") + Defaults.ComPortDelimiter);
         }
-
-
         
         #endregion
     }
