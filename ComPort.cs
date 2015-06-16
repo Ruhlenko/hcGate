@@ -164,23 +164,19 @@ namespace hcGate
             if (0 != bytesRead)
             {
                 byte b;
-                for (int i = 0; i < bytesRead; i++)
+                for (var i = 0; i < bytesRead; i++)
                 {
                     b = (byte)_port.ReadByte();
-                    switch (b)
+                    if (b == 0x0D)
                     {
-                        case 0x0D:
-                            parseReceived();
+                        parseReceived();
+                        _bufferSize = 0;
+                    }
+                    else if (b > 0x20 && b < 0x7F)
+                    {
+                        _buffer[_bufferSize++] = b;
+                        if (_bufferSize > _buffer.Length)
                             _bufferSize = 0;
-                            break;
-                        default:
-                            if (b > 0x20 && b < 0x7F)
-                            {
-                                _buffer[_bufferSize++] = b;
-                                if (_bufferSize > _buffer.Length)
-                                    _bufferSize = 0;
-                            }
-                            break;
                     }
                 }
             }
@@ -283,7 +279,7 @@ namespace hcGate
             byte sum = CheckSum.Sum8(_str);
             _port.Write(_str + sum.ToString("X2") + Defaults.ComPortDelimiter);
         }
-        
+
         #endregion
     }
 }
