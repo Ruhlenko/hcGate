@@ -61,25 +61,25 @@ namespace hcGate
 
         #region " Events "
 
-        public event EventHandler<hcData> DataReceivedEventHandler;
+        public event EventHandler<hcData> DataReceived;
         void OnDataReceived(int id, int data)
         {
-            if (DataReceivedEventHandler != null)
-                DataReceivedEventHandler(this, new hcData(id, data));
+            if (DataReceived != null)
+                DataReceived(this, new hcData(id, data));
         }
 
-        public event EventHandler<hcCommand> CommandReceivedEventHandler;
+        public event EventHandler<hcCommand> CommandReceived;
         void OnCommandReceived(byte id, string cmd)
         {
-            if (CommandReceivedEventHandler != null)
-                CommandReceivedEventHandler(this, new hcCommand(id, cmd));
+            if (CommandReceived != null)
+                CommandReceived(this, new hcCommand(id, cmd));
         }
 
-        public event EventHandler ResetReceivedEventHandler;
+        public event EventHandler ResetReceived;
         void OnResetReceived()
         {
-            if (ResetReceivedEventHandler != null)
-                ResetReceivedEventHandler(this, EventArgs.Empty);
+            if (ResetReceived != null)
+                ResetReceived(this, EventArgs.Empty);
         }
 
         #endregion
