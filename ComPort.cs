@@ -6,7 +6,7 @@ using System.Timers;
 
 namespace hcGate
 {
-    class ComPort
+    class ComPort : IDisposable
     {
         #region " Fields & Properties "
 
@@ -278,6 +278,16 @@ namespace hcGate
         {
             byte sum = CheckSum.Sum8(_str);
             _port.Write(_str + sum.ToString("X2") + Defaults.ComPortDelimiter);
+        }
+
+        #endregion
+
+        #region " IDisposable "
+
+        public void Dispose()
+        {
+            _port.Dispose();
+            _watchdogTimer.Dispose();
         }
 
         #endregion
