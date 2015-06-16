@@ -4,7 +4,7 @@ namespace hcGate
 {
     static class Defaults
     {
-        public const string SettingsFileName = "hcGate.conf";
+        public const string SettingsFileName = "hcGate.ini";
 
         public const string ServiceName = "hcGate Service";
         public const ServiceStartMode ServiceStartType = ServiceStartMode.Manual;
@@ -17,5 +17,7 @@ namespace hcGate
         public const string ComPortDelimiter = "\n";
 
         public const double WatchdogTimerInterval = 5000;
+
+        public const int DataCacheSize = 1024;
     }
 }
