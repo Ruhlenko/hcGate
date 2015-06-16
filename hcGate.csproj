@@ -34,15 +34,25 @@
   </PropertyGroup>
   <ItemGroup>
     <None Include="App.config" />
+    <None Include="hcGate.ini">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="CheckSum.cs" />
     <Compile Include="ComPort.cs" />
     <Compile Include="Defaults.cs" />
+    <Compile Include="hcCache.cs" />
     <Compile Include="hcCommand.cs" />
     <Compile Include="hcData.cs" />
+    <Compile Include="hcGate.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="HexParser.cs" />
+    <Compile Include="IniFile.cs" />
+    <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="TcpClient.cs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="System" />

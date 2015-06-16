@@ -4,10 +4,10 @@ namespace hcGate
 {
     static class Defaults
     {
-        public const string SettingsFileName = "hcGate.ini";
+        public const string SettingsFileName = @"hcGate.ini";
 
         public const string ServiceName = "hcGate Service";
-        public const ServiceStartMode ServiceStartType = ServiceStartMode.Manual;
+        public const ServiceStartMode ServiceStartType = ServiceStartMode.Automatic;
         public const int TcpPort = 7231;
 
         public const int IoBufferSize = 255;
