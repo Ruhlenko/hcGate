@@ -6,7 +6,6 @@ namespace hcGate
 {
     class hcCommand : EventArgs
     {
-
         private byte _id;
         public byte ID { get { return _id; } }
 
@@ -15,6 +14,5 @@ namespace hcGate
 
         public hcCommand(string keys) { _id = 0; _keys = keys; }
         public hcCommand(byte id, string keys) { _id = id; _keys = keys; }
-
     }
 }

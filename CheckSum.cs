@@ -2,7 +2,6 @@
 {
     static class CheckSum
     {
-
         public static byte Sum8(string str)
         {
             byte result = 0;
@@ -18,6 +17,5 @@
                 result += buffer[i];
             return result;
         }
-
     }
 }
