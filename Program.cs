@@ -13,7 +13,14 @@ namespace hcGate
             if (args.Length > 0)
             {
                 if (Regex.IsMatch(args[0], "^[/|-]?console$", RegexOptions.IgnoreCase))
+                {
                     service.ConsoleMode = true;
+                }
+                else if (Regex.IsMatch(args[0], "^[/|-]?autonomous$", RegexOptions.IgnoreCase))
+                {
+                    service.ConsoleMode = true;
+                    service.Autonomous = true;
+                }
             }
 
             service.ReadSettings();
