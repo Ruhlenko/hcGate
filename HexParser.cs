@@ -29,6 +29,17 @@ namespace hcGate
             return data;
         }
 
+        public static UInt16 GetUInt16(byte[] buffer, int index)
+        {
+            UInt16 data = 0;
+            try
+            {
+                data = UInt16.Parse(Encoding.ASCII.GetString(buffer, index, sizeof(UInt16) * 2), NumberStyles.HexNumber);
+            }
+            catch { }
+            return data;
+        }
+
         public static Int32 GetInt32(byte[] buffer, int index)
         {
             Int32 data = 0;

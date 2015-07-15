@@ -16,7 +16,7 @@ namespace hcGate
 
         public void SendData(int id, int data)
         {
-            Send(String.Format("#{0:X8}{1:X4}\r", id, data));
+            Send(String.Format("#{0:X4}{1:X4}\r\n", (UInt16)id, (Int16)data));
         }
 
         public void SendCommand(int id, string cmd)
@@ -25,7 +25,7 @@ namespace hcGate
             if (ID == 0) return;
             if (id != 0 && id != ID) return;
 
-            Send(String.Format("K{0:X2}{1}\r", id, cmd));
+            Send(String.Format("K{0:X2}{1}\r\n", (Byte)id, cmd));
         }
 
         public void Send(string str)

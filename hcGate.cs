@@ -97,6 +97,8 @@ namespace hcGate
 
         protected override void OnStart(string[] args)
         {
+            initCache();
+
             startTcpServer();
             if (_tcpServerStarted)
                 _tcpServerSocket.BeginAccept(new AsyncCallback(tcpAcceptCallback), _tcpServerSocket);
@@ -156,7 +158,7 @@ namespace hcGate
 
         private void Serial_CommandReceived(object sender, hcCommand e)
         {
-            foreach (TcpClient client in _tcpClients)
+            foreach (var client in _tcpClients)
                 client.SendCommand(e.ID, e.Keys);
         }
 
@@ -177,7 +179,7 @@ namespace hcGate
 
         private void startTcpServer()
         {
-            IPEndPoint endPoint = new IPEndPoint(IPAddress.Any, _tcpPort);
+            var endPoint = new IPEndPoint(IPAddress.Any, _tcpPort);
             try
             {
                 _tcpServerSocket = new Socket(endPoint.Address.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
@@ -201,7 +203,7 @@ namespace hcGate
 
         private void tcpAcceptCallback(IAsyncResult result)
         {
-            TcpClient newTcpClient = new TcpClient();
+            var newTcpClient = new TcpClient();
             try
             {
                 // Завершение операции Accept
@@ -336,17 +338,17 @@ namespace hcGate
                     }
                     break;
                 case '#':
-                    if (client.InputBufferSize == (1 + 8 + 4))
+                    if (client.InputBufferSize == (1 + 4 + 4))
                     {
-                        int id = HexParser.GetInt32(client.InputBuffer, 1);
-                        int data = HexParser.GetInt16(client.InputBuffer, 9);
+                        int id = HexParser.GetUInt16(client.InputBuffer, 1);
+                        int data = HexParser.GetInt16(client.InputBuffer, 5);
                         SendDataToPLC(id, data);
                     }
                     break;
                 case '@':
-                    if (client.InputBufferSize == (1 + 8))
+                    if (client.InputBufferSize == (1 + 4))
                     {
-                        int id = HexParser.GetInt32(client.InputBuffer, 1);
+                        var id = HexParser.GetUInt16(client.InputBuffer, 1);
                         client.SendData(id, _cache.Read(id));
                     }
                     break;
@@ -410,7 +412,7 @@ namespace hcGate
         {
             _cache.Reset();
 
-            foreach (TcpClient client in _tcpClients)
+            foreach (var client in _tcpClients)
                 SendAllDataToClient(client);
         }
 

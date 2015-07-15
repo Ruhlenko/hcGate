@@ -1,4 +1,4 @@
-﻿namespace hcGate
+namespace hcGate
 {
     class hcCache<T>
     {
@@ -20,7 +20,7 @@
             if (id < 0) return _defaultData;
             if (id >= _data.Length) return _defaultData;
 
-            if (id > _count) _count = id;
+            if (id >= _count) _count = id + 1;
 
             return _data[id];
         }
@@ -30,7 +30,7 @@
             if (id < 0) return;
             if (id >= _data.Length) return;
 
-            if (id > _count) _count = id;
+            if (id >= _count) _count = id + 1;
 
             _data[id] = data;
         }
