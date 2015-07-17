@@ -378,8 +378,6 @@ namespace hcGate
 
         private void SendDataToPLC(int id, int data)
         {
-            if (id == 0) return;
-
             if (_autonomous)
             {
                 _cache.Write(id, data);
