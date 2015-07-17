@@ -53,12 +53,12 @@ namespace hcGate
             {
                 switch (type)
                 {
-                    case EventLogEntryType.Error:
-                        Console.Write("[Error] ");
-                        break;
-                    case EventLogEntryType.Warning:
-                        Console.Write("[Warning] ");
-                        break;
+                case EventLogEntryType.Error:
+                    Console.Write("[Error] ");
+                    break;
+                case EventLogEntryType.Warning:
+                    Console.Write("[Warning] ");
+                    break;
                 }
                 Console.WriteLine(message);
             }
@@ -257,24 +257,24 @@ namespace hcGate
                         b = tcpClient.AsyncBuffer[i];
                         switch (b)
                         {
-                            case 0x0A: break;
-                            case 0x0D:
-                                if (_consoleMode)
-                                {
-                                    Console.Write("From {0}>", tcpClient.Socket.RemoteEndPoint);
-                                    for (var j = 0; j < tcpClient.InputBufferSize; j++)
-                                        Console.Write((char)tcpClient.InputBuffer[j]);
-                                    Console.WriteLine();
-                                }
+                        case 0x0A: break;
+                        case 0x0D:
+                            if (_consoleMode)
+                            {
+                                Console.Write("From {0}>", tcpClient.Socket.RemoteEndPoint);
+                                for (var j = 0; j < tcpClient.InputBufferSize; j++)
+                                    Console.Write((char)tcpClient.InputBuffer[j]);
+                                Console.WriteLine();
+                            }
 
-                                tcpParseReceived(tcpClient);
+                            tcpParseReceived(tcpClient);
+                            tcpClient.InputBufferSize = 0;
+                            break;
+                        default:
+                            tcpClient.InputBuffer[tcpClient.InputBufferSize++] = b;
+                            if (tcpClient.InputBufferSize > tcpClient.InputBuffer.Length)
                                 tcpClient.InputBufferSize = 0;
-                                break;
-                            default:
-                                tcpClient.InputBuffer[tcpClient.InputBufferSize++] = b;
-                                if (tcpClient.InputBufferSize > tcpClient.InputBuffer.Length)
-                                    tcpClient.InputBufferSize = 0;
-                                break;
+                            break;
                         }
                     }
 
@@ -322,44 +322,44 @@ namespace hcGate
 
             switch ((char)client.InputBuffer[0])
             {
-                case '%':
-                    if (client.InputBufferSize == (1 + 2 + 1))
+            case '%':
+                if (client.InputBufferSize == (1 + 2 + 1))
+                {
+                    client.ID = HexParser.GetByte(client.InputBuffer, 1);
+                    if (client.InputBuffer[3] == '1')
                     {
-                        client.ID = HexParser.GetByte(client.InputBuffer, 1);
-                        if (client.InputBuffer[3] == '1')
-                        {
-                            client.AutoUpdate = true;
-                            SendAllDataToClient(client);
-                        }
-                        else
-                        {
-                            client.AutoUpdate = false;
-                        }
+                        client.AutoUpdate = true;
+                        SendAllDataToClient(client);
                     }
-                    break;
-                case '#':
-                    if (client.InputBufferSize == (1 + 4 + 4))
+                    else
                     {
-                        int id = HexParser.GetUInt16(client.InputBuffer, 1);
-                        int data = HexParser.GetInt16(client.InputBuffer, 5);
-                        SendDataToPLC(id, data);
+                        client.AutoUpdate = false;
                     }
-                    break;
-                case '@':
-                    if (client.InputBufferSize == (1 + 4))
-                    {
-                        var id = HexParser.GetUInt16(client.InputBuffer, 1);
-                        client.SendData(id, _cache.Read(id));
-                    }
-                    break;
-                case 'K':
-                    if (client.InputBufferSize > (1 + 2))
-                    {
-                        byte id = HexParser.GetByte(client.InputBuffer, 1);
-                        String str = Encoding.ASCII.GetString(client.InputBuffer, 3, client.InputBufferSize - 3);
-                        Serial_CommandReceived(this, new hcCommand(id, str));
-                    }
-                    break;
+                }
+                break;
+            case '#':
+                if (client.InputBufferSize == (1 + 4 + 4))
+                {
+                    var id = (int)HexParser.GetUInt16(client.InputBuffer, 1);
+                    var data = (int)HexParser.GetInt16(client.InputBuffer, 5);
+                    SendDataToPLC(id, data);
+                }
+                break;
+            case '@':
+                if (client.InputBufferSize == (1 + 4))
+                {
+                    var id = (int)HexParser.GetUInt16(client.InputBuffer, 1);
+                    client.SendData(id, _cache.Read(id));
+                }
+                break;
+            case 'K':
+                if (client.InputBufferSize > (1 + 2))
+                {
+                    byte id = HexParser.GetByte(client.InputBuffer, 1);
+                    String str = Encoding.ASCII.GetString(client.InputBuffer, 3, client.InputBufferSize - 3);
+                    Serial_CommandReceived(this, new hcCommand(id, str));
+                }
+                break;
             }
 
         }

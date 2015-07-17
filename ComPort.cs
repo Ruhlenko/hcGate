@@ -160,7 +160,7 @@ namespace hcGate
 
         void receiveCallback(object sender, SerialDataReceivedEventArgs e)
         {
-            int bytesRead = _port.BytesToRead;
+            var bytesRead = _port.BytesToRead;
             if (0 != bytesRead)
             {
                 byte b;
@@ -195,89 +195,89 @@ namespace hcGate
 
             switch ((char)_buffer[0])
             {
-                case '$':
-                    if (_bufferSize == (2))
+            case '$': // Command received
+                if (_bufferSize == (2))
+                {
+                    switch ((char)_buffer[1])
                     {
-                        switch ((char)_buffer[1])
+                    case 'T': // New event request received
+                        if (!_valid)
                         {
-                            case 'T':
-                                if (!_valid)
-                                {
-                                    Send("!R");
-                                    break;
-                                }
-                                hcData _evt = outQueue_Peek();
-                                if (_evt == null)
-                                {
-                                    Send("!0");
-                                }
-                                else
-                                {
-                                    Send(String.Format("!{0:X4}{1:X4}", (Int16)_evt.ID, (Int16)_evt.Data));
-                                }
-                                break;
+                            Send("!R"); // All data request
+                            break;
+                        }
+                        hcData evt = outQueue_Peek();
+                        if (evt == null)
+                        {
+                            Send("!0"); // No data
+                        }
+                        else
+                        {
+                            Send(String.Format("!{0:X4}{1:X4}", (UInt16)evt.ID, (Int16)evt.Data));
+                        }
+                        break;
 
-                            case 'C':
-                                lock (_outQueue)
-                                {
-                                    if (_outQueue.Count > 0)
-                                        _outQueue.RemoveFirst();
-                                }
-                                break;
+                    case 'C': // Clear last event received
+                        lock (_outQueue)
+                        {
+                            if (_outQueue.Count > 0)
+                                _outQueue.RemoveFirst();
+                        }
+                        break;
 
-                            case 'R':
-                                lock (_outQueue)
-                                {
-                                    _outQueue.Clear();
-                                }
-                                OnResetReceived();
-                                Send("!");
-                                _valid = true;
-                                break;
+                    case 'R': // Data reset received
+                        lock (_outQueue)
+                        {
+                            _outQueue.Clear();
+                        }
+                        OnResetReceived();
+                        Send("!");
+                        _valid = true;
+                        break;
+                    }
+                }
+                else if (_bufferSize > (2+2))
+                {
+                    if ((char)_buffer[1] == 'K')
+                    {
+                        var id = HexParser.GetByte(_buffer, 2);
+                        if (0 != id)
+                        {
+                            var str = Encoding.ASCII.GetString(_buffer, 4, _bufferSize - 4);
+                            OnCommandReceived(id, str);
                         }
                     }
-                    else if (_bufferSize > (2 + 2))
-                    {
-                        if ((char)_buffer[1] == 'K')
-                        {
-                            byte _id = HexParser.GetByte(_buffer, 2);
-                            if (0 != _id)
-                            {
-                                String _str = Encoding.ASCII.GetString(_buffer, 4, _bufferSize - 4);
-                                OnCommandReceived(_id, _str);
-                            }
-                        }
-                    }
-                    break;
+                }
+                break;
 
-                case '#':
-                    if (_bufferSize == (1 + 4 + 4))
-                    {
-                        int _id = HexParser.GetInt16(_buffer, 1);
-                        int _val = HexParser.GetInt16(_buffer, 5);
-                        OnDataReceived(_id, _val);
-                        Send(">");
-                    }
-                    break;
+            case '#': // Data received
+                if (_bufferSize == (1 + 4 + 4))
+                {
+                    int _id = HexParser.GetUInt16(_buffer, 1);
+                    int _val = HexParser.GetInt16(_buffer, 5);
+                    OnDataReceived(_id, _val);
+                    Send(">");
+                }
+                break;
             }
         }
 
         hcData outQueue_Peek()
         {
-            hcData _hd = null;
+            hcData hd = null;
             lock (_outQueue)
             {
                 LinkedListNode<hcData> firstEvt = _outQueue.First;
                 if (firstEvt != null)
-                    _hd = firstEvt.Value;
+                    hd = firstEvt.Value;
             }
-            return _hd;
+            return hd;
         }
 
-        void Send(string _str)
+        void Send(string str)
         {
-            byte sum = CheckSum.Sum8(_str);
-            _port.Write(_str + sum.ToString("X2") + Defaults.ComPortDelimiter);
+            var sum = CheckSum.Sum8(str);
+            _port.Write(str + sum.ToString("X2") + Defaults.ComPortDelimiter);
         }
 
         #endregion
