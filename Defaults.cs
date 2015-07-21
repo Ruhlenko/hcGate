@@ -14,7 +14,7 @@ namespace hcGate
 
         public const string ComPortName = "COM1";
         public const int ComPortBaud = 115200;
-        public const string ComPortDelimiter = "\n";
+        public const string ComPortDelimiter = "\r";
 
         public const double WatchdogTimerInterval = 5000;
 
